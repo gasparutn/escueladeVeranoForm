@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Formulario de Registro</title>
+<?!= HtmlService.createHtmlOutputFromFile('Estilos.css').getContent(); ?>
+<style>
+  #cantidadCuotasContainer {
+    display: none;
+  }
+  /* (h) Estilo para el loader de aptitud */
+  #loader-aptitud {
+    display: none;
+    text-align: center;
+    margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+
+
+<div class="container">
+<h1>Formulario de Inscripción</h1>
+<h2>Colonia de Verano 2025</h2>
+
+
+<div id="validacion-seccion">
+<div class="form-section">
+<h3>Paso 1: Verificación de DNI</h3>
+<label for="tipoInscripto">¿Es un nuevo inscripto o ya participó en la colonia anteriormente?</label>
+<select id="tipoInscripto" name="tipoInscripto" required>
+<option value="nuevo">Soy Nuevo Inscripto</option>
+<option value="anterior">Soy Inscripto Anterior</option>
+</select>
+<label for="dni-input">Ingrese el DNI del inscripto (sin puntos)</label>
+<input type="text" id="dni-input" required pattern="\d{7,8}" maxlength="8" placeholder="Ej: 12345678">
+<button type="button" id="btn-validar">Verificar DNI</button>
+</div>
+<div class="loader" id="loader-validacion">
+<div class="spinner"></div>
+<p>Verificando...</p>
+</div>
+<div class="status" id="status-validacion"></div>
+<div id="timer-seccion">
+<p>El cupo disponible se obtiene al confirmar el registro con todos los datos completos y el pago del mismo.</p>
+<p>Cargando formulario en <strong id="timer-countdown">10</strong> segundos...</p>
+</div>
+</div>
+
+
+
+
+<div id="registro-seccion" style="display:none;">
+<form id="registroForm">
+<div class="form-section">
+<h3>Paso 2: Completar Datos del Inscripto</h3>
+<label for="apellidoNombre">Apellido y Nombre Completo</label>
+<input type="text" id="apellidoNombre" name="apellidoNombre" class="form-cache" required>
+<label for="dni">DNI (sin puntos)</label>
+<input type="text" id="dni" name="dni" class="form-cache" required readonly>
+<label for="fechaNacimiento">Fecha de Nacimiento</label>
+<input type="date" id="fechaNacimiento" name="fechaNacimiento" class="form-cache" required>
+<div id="edad-calculada"></div>
+</div>
+
+
+<div class="form-section">
+<h3>Información Adicional</h3>
+<label for="colegioJardin">Colegio / Jardín</label>
+<input type="text" id="colegioJardin" name="colegioJardin" class="form-cache">
+<label for="obraSocial">Obra Social</label>
+<input type="text" id="obraSocial" name="obraSocial" class="form-cache">
+</div>
+
+
+<div class="form-section">
+<h3>Datos de Adultos Responsables</h3>
+<label for="adultoResponsable1">Responsable 1 (Nombre y Apellido)</label>
+<input type="text" id="adultoResponsable1" name="adultoResponsable1" class="form-cache" required>
+<label for="adultoResponsable2">Responsable 2 (Nombre y Apellido)</label>
+<input type="text" id="adultoResponsable2" name="adultoResponsable2" class="form-cache">
+<label for="email">Email de Contacto Principal</label>
+<input type="email" id="email" name="email" class="form-cache" required>
+<label>Teléfonos de Contacto</label>
+<div id="telefonos-container">
+</div>
+<button type="button" id="btn-add-telefono" class="btn-dinamico">Agregar Teléfono</button>
+<label style="margin-top: 20px;">Personas autorizadas a retirar</label>
+<div id="autorizados-container">
+</div>
+<button type="button" id="btn-add-autorizado" class="btn-dinamico">Agregar Autorizado</button>
+</div>
+
+
+<div class="form-section">
+<h3>Información de Salud</h3>
+<div class="radio-group">
+<label>¿Practica algún deporte o actividad extracurricular?</label>
+<label><input type="radio" name="practicaDeporte" value="Sí" class="form-cache" required> Sí</label>
+<label><input type="radio" name="practicaDeporte" value="No" class="form-cache"> No</label>
+</div>
+<input type="text" id="especifiqueDeporte" name="especifiqueDeporte" class="form-cache" placeholder="Si la respuesta es sí, especifique cuál" style="display:none;">
+<div class="radio-group">
+<label>¿Tiene alguna enfermedad preexistente o medicación especial?</label>
+<label><input type="radio" name="tieneEnfermedad" value="Sí" class="form-cache" required> Sí</label>
+<label><input type="radio" name="tieneEnfermedad" value="No" class="form-cache"> No</label>
+</div>
+<input type="text" id="especifiqueEnfermedad" name="especifiqueEnfermedad" class="form-cache" placeholder="Si la respuesta es sí, especifique" style="display:none;">
+<div class="radio-group">
+<label>¿Es alérgico/a a algo?</label>
+<label><input type="radio" name="esAlergico" value="Sí" class="form-cache" required> Sí</label>
+<label><input type="radio" name="esAlergico" value="No" class="form-cache"> No</label>
+</div>
+<input type="text" id="especifiqueAlergia" name="especifiqueAlergia" class="form-cache" placeholder="Si la respuesta es sí, especifique" style="display:none;">
+</div>
+
+
+<div class="form-section">
+<h3>Documentación y Pago</h3>
+<label for="certificadoAptitud">Certificado de Aptitud Física (Opcional)</label>
+<label for="certificadoAptitud" class="file-input-label">Seleccionar Certificado</label>
+<input type="file" id="certificadoAptitud" name="certificadoAptitud" accept="image/jpeg, image/png, application/pdf">
+<span id="certificadoAptitudName" class="file-name">Ningún archivo seleccionado</span>
+<div class="loader-archivo" id="loader-certificado"></div>
+<input type="hidden" id="urlCertificadoAptitud" name="urlCertificadoAptitud">
+
+
+<label for="fotoCarnet">Foto Carnet 4x4 (Requerida)</label>
+<label for="fotoCarnet" class="file-input-label">Seleccionar Foto</label>
+<input type="file" id="fotoCarnet" name="fotoCarnet" accept="image/jpeg, image/png">
+<span id="fotoCarnetName" class="file-name">Ningún archivo seleccionado</span>
+<div class="loader-archivo" id="loader-foto"></div>
+<input type="hidden" id="urlFotoCarnet" name="urlFotoCarnet">
+
+
+<label for="jornada">Seleccione la Jornada</label>
+<select id="jornada" name="jornada" class="form-cache" required>
+<option value="">-- Por favor, elija una opción --</option>
+<option value="Jornada Normal">Jornada Normal</option>
+<option value="Jornada Normal extendida">Jornada Normal Extendida</option>
+</select>
+
+
+<label for="metodoPago">Seleccione el Método de Pago</label>
+<select id="metodoPago" name="metodoPago" class="form-cache" required>
+<option value="">-- Por favor, elija una opción --</option>
+<option value="Pago Online">Pago Online (Total)</option>
+<option value="Pago en Cuotas">Pago en Cuotas (Online)</option>
+<option value="Pago Efectivo">Pago en Efectivo (En el local)</option>
+</select>
+
+
+<div id="cantidadCuotasContainer">
+  <label for="cantidadCuotas">Seleccione la cantidad de cuotas</label>
+  <select id="cantidadCuotas" name="cantidadCuotas">
+    <option value="1">1 Cuota</option>
+    <option value="2">2 Cuotas</option>
+    <option value="3">3 Cuotas</option>
+  </select>
+</div>
+</div>
+
+
+<button type="submit" id="submit-button">Registrar y Continuar</button>
+<button type="button" id="btn-limpiar-form">Limpiar Formulario</button>
+
+
+</form>
+<div class="loader" id="loader-registro">
+<div class="spinner"></div>
+<p>Procesando registro... Por favor, espere.</p>
+</div>
+<div class="status" id="status-registro"></div>
+</div>
+</div>
+
+
+<script>
+const APP_URL = "<?= appUrl ?>";
+const CACHE_KEY = 'formDataCache';
+let numeroDeTurnoGuardado = null;
+
+
+// =========================================================
+// DEFINICIONES DE FUNCIONES
+// =========================================================
+
+
+function handleRegistroSuccess(response) {
+if (response.status === 'OK_REGISTRO') {
+limpiarCache();
+numeroDeTurnoGuardado = response.numeroDeTurno;
+const loaderText = document.getElementById('loader-registro').querySelector('p');
+loaderText.textContent = `¡Registro guardado (Turno #${response.numeroDeTurno})! Creando link de pago y enviando email...`;
+
+
+google.script.run
+.withSuccessHandler(handlePagoSuccess)
+.withFailureHandler(handlePagoFailure)
+.paso2_crearPagoYEmail(response.datos, response.numeroDeTurno);
+
+
+} else {
+handleRegistroFailure(response);
+}
+}
+
+
+function handleRegistroFailure(error) {
+document.getElementById('submit-button').disabled = false;
+document.getElementById('loader-registro').style.display = 'none';
+const errorMessage = error.message || 'Ocurrió un error desconocido al registrar.';
+document.getElementById('status-registro').innerHTML = `<div class="mensaje error"><strong>Error al Registrar:</strong> ${errorMessage}</div>`;
+}
+
+
+/**
+ * (j) Estilos de Botón ELIMINADOS y reemplazados por CLASES CSS
+ */
+function handlePagoSuccess(response) {
+document.getElementById('registroForm').style.display = 'none';
+document.getElementById('loader-registro').style.display = 'none';
+const statusDiv = document.getElementById('status-registro');
+
+
+const mpIconHTML = `
+    <svg style="vertical-align: middle; margin-right: 10px; height: 20px; width: 20px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+        <path fill="var(--color-principal, #007bff)" d="M12.78 6.6l-5.32 8.35c-.17.26-.5.3-.73.08l-3.2-3.17c-.24-.22-.22-.61.03-.81l5.32-8.35c.17-.26.5-.3.73-.08l3.2 3.17c.23.23.21.61-.03.81zm-4.04 1.25l-2.6-4.07.03-.02c.04-.03.07-.06.11-.08l.06-.03.04-.02c.04-.02.08-.04.12-.05l.07-.02c.05-.01.1-.01.15-.01h.04c.06.01.12.01.17.03l.1.04.05.02c.05.03.1.06.14.1l.06.04c.03.03.06.06.09.09l.06.07c.02.03.04.07.06.11l.02.07c.01.03.01.07.01.1v.03c0 .05-.01.1-.03.14l.01-.03-2.73 4.3c-.04.06-.09.1-.15.13-.02.01-.03.02-.05.02-.06.03-.13.04-.2.04h-.05c-.07 0-.13-.01-.2-.04zm-1.8 1.45l-.04-.06c-.02-.04-.03-.09-.03-.13v-.04c0-.06.01-.11.03-.17l2.6-4.07c.04-.06.09-.1.15-.13.02-.01.03-.02.05-.02.06-.03.13-.04.2-.04h.05c.07 0 .13.01.2.04l.04.06c.02.04.03.09.03.13v.04c0-.06.01-.11.03-.17l-2.6 4.07c-.04.06-.09.1-.15.13-.02.01-.03.02-.05.02-.06.03-.13.04-.2.04h-.05c-.07 0-.13-.01-.2-.04z"/>
+    </svg>
+`;
+
+
+if (response && response.status === 'OK_PAGO' && response.init_point) {
+// (j) Asignar clases CSS en lugar de estilos en línea
+statusDiv.innerHTML = `
+<div class="mensaje exito">¡Proceso inscripción completo!</div>
+<p style="text-align:center; font-weight:bold; margin:20px 0;">Presione el botón para ir a la página de pago segura de Mercado Pago.</p>
+<div id="btn-mp-container">
+    <a href="${response.init_point}" id="btn-ir-a-pagar" class="btn-final-pago" target="_top">
+        ${mpIconHTML}Ir a Pagar a Mercado Pago
+    </a>
+</div>
+<button type="button" id="btn-volver-form-limpio" class="btn-final-volver">Volver a Iniciar (Formulario Limpio)</button>
+`;
+
+
+// Listener para el botón de volver
+document.getElementById('btn-volver-form-limpio').addEventListener('click', function() {
+    window.top.location.href = APP_URL;
+});
+
+
+
+
+} else if (response && (response.status === 'OK_EFECTIVO' || response.status === 'OK_REGISTRO_SIN_PAGO')) {
+// (j) Asignar clases CSS
+statusDiv.innerHTML = `
+<div class="mensaje exito">${response.message}</div>
+<button type="button" id="btn-volver-form-limpio" class="btn-final-volver">Volver a Iniciar (Formulario Limpio)</button>
+`;
+
+
+document.getElementById('btn-volver-form-limpio').addEventListener('click', function() {
+    window.top.location.href = APP_URL;
+});
+
+
+} else if (response && response.status === 'OK_REGISTRO_SIN_LINK') {
+// (j) Asignar clases CSS
+statusDiv.innerHTML = `<div class="mensaje aviso">${response.message}</div>
+<button type="button" id="btn-volver-form-limpio" class="btn-final-volver">Volver a Iniciar (Formulario Limpio)</button>
+`;
+
+
+document.getElementById('btn-volver-form-limpio').addEventListener('click', function() {
+    window.top.location.href = APP_URL;
+});
+
+
+} else {
+const errorMessage = response.message || 'Ocurrió un error desconocido en el paso 2.';
+statusDiv.innerHTML = `<div class="mensaje error"><strong>Error:</strong> ${errorMessage}</div>`;
+document.getElementById('registroForm').style.display = 'block';
+document.getElementById('submit-button').disabled = false;
+}
+}
+
+
+function handlePagoFailure(error) {
+document.getElementById('submit-button').disabled = false;
+document.getElementById('loader-registro').style.display = 'none';
+document.getElementById('status-registro').innerHTML = `<div class="mensaje aviso">
+<strong>¡REGISTRO GUARDADO (Turno #${numeroDeTurnoGuardado})!</strong><br>
+Pero ocurrió un error al crear el link de pago o enviar el email: ${error.message}.
+<br>Por favor, contacte a la administración con su número de turno.
+</div>`;
+}
+
+
+
+
+/**
+ * (h) Lógica de Aptitud Física mejorada
+ */
+function handleValidationSuccess(response) {
+document.getElementById('btn-validar').disabled = false;
+document.getElementById('loader-validacion').style.display = 'none';
+const statusDiv = document.getElementById('status-validacion');
+
+
+if (response.status === 'OK' || response.status === 'OK_NUEVO') {
+iniciarTemporizador(response);
+
+
+} else if (response.status === 'DUPLICADO_PAGADO') {
+statusDiv.innerHTML = `<div class="mensaje exito"><strong>Aviso:</strong> ${response.message}</div>`;
+// (a) Lógica para Aptitud Física
+if (response.adeudaAptitud === true) {
+let htmlAptitud = `
+<div id="aptitud-manual-seccion" style="margin-top: 15px; padding: 10px; border: 1px solid #e67e22; border-radius: 5px; background: #fdf5e6;">
+<h3 style="background-color: #e67e22; color: white; padding: 10px;">¡Atención!</h3>
+<p style="text-align: center; font-weight: bold; color: #e67e22;">Adeuda Certificado de Aptitud Física</p>
+<p>Por favor, suba el certificado para completar la ficha.</p>
+<label for="aptitud-manual-upload" class="file-input-label" style="background-color: #e67e22;">Seleccionar Certificado</label>
+<input type="file" id="aptitud-manual-upload" accept="image/jpeg, image/png, application/pdf">
+<span id="aptitud-manual-name" class="file-name">Ningún archivo seleccionado</span>
+<button type="button" id="btn-submit-aptitud-manual" style="background-color: #e67e22; width: 100%; height:45px">Subir Certificado!!!</button>
+<div class="loader" id="loader-aptitud" style="display: none;"><div class="spinner"></div><p>Subiendo...</p></div>
+</div>`;
+statusDiv.innerHTML += htmlAptitud;
+
+
+document.getElementById('aptitud-manual-upload').addEventListener('change', function() {
+    document.getElementById('aptitud-manual-name').textContent = this.files[0] ? this.files[0].name : 'Ningún archivo seleccionado';
+});
+document.getElementById('btn-submit-aptitud-manual').addEventListener('click', submitAptitudManual);
+}
+
+
+} else if (response.status === 'DUPLICADO_PENDIENTE_PAGO' ||
+response.status === 'DUPLICADO_PENDIENTE_EFECTIVO' ||
+response.status === 'DUPLICADO_PENDIENTE_ERROR') {
+
+
+let html = `<div class="mensaje error" style="text-align:left;"><strong>${response.message}</strong></div>`;
+
+
+// (L) Si es un error de repago, no mostramos el botón de pago.
+if (response.status === 'DUPLICADO_PENDIENTE_PAGO' && response.init_point) {
+html += `
+<p style="text-align:center; font-weight:bold; margin-top:15px;">Para completar la inscripción, elija una opción:</p>
+<button type="button" id="btn-pagar-pendiente">1. Pagar Ahora con Mercado Pago</button>
+`;
+}
+
+
+html += `
+<div id="comprobante-manual-seccion">
+<h3>2. Si ya abonó, suba su comprobante:</h3>
+<p>Puede subir una captura de pantalla, foto del ticket o PDF.</p>
+<label for="comprobante-manual-upload" class="file-input-label" style="background-color: #7f8c8d;">Seleccionar Archivo para Subir</label>
+<input type="file" id="comprobante-manual-upload" accept="image/jpeg, image/png, application/pdf">
+<span id="comprobante-manual-name" class="file-name">Ningún archivo seleccionado</span>
+<button type="button" id="btn-cancelar-upload">Cancelar</button>
+</div>
+`;
+
+
+statusDiv.innerHTML = html;
+
+
+document.getElementById('comprobante-manual-upload').addEventListener('change', function() {
+const file = this.files[0];
+if (!file) {
+    document.getElementById('comprobante-manual-name').textContent = 'Ningún archivo seleccionado';
+    return;
+}
+document.getElementById('comprobante-manual-name').textContent = file.name;
+const dni = document.getElementById('dni-input').value;
+this.disabled = true;
+const btnCancelar = document.getElementById('btn-cancelar-upload');
+if(btnCancelar) btnCancelar.disabled = true;
+const btnPagarPendiente = document.getElementById('btn-pagar-pendiente');
+if(btnPagarPendiente) btnPagarPendiente.disabled = true;
+document.getElementById('loader-validacion').style.display = 'block';
+document.getElementById('loader-validacion').querySelector('p').textContent = "Subiendo comprobante...";
+comprimirYLeerArchivo(file).then(fileData => {
+    google.script.run
+    .withSuccessHandler(handleComprobanteUploadSuccess)
+    .withFailureHandler(handleValidationFailure)
+    .subirComprobanteManual(dni, fileData);
+}).catch(err => {
+    handleValidationFailure(err);
+});
+});
+
+
+const btnPagar = document.getElementById('btn-pagar-pendiente');
+if (btnPagar) {
+btnPagar.addEventListener('click', function() {
+this.disabled = true;
+this.textContent = "Redirigiendo...";
+window.top.location.href = response.init_point;
+});
+}
+document.getElementById('btn-cancelar-upload').addEventListener('click', function() {
+window.top.location.href = APP_URL;
+});
+
+
+} else if (response.status === 'ERROR_TIPO_NUEVO' || response.status === 'ERROR_TIPO_ANT' || response.status === 'YA_REGISTRADO' || response.status === 'ANULADO' || response.status === 'NO_ENCONTRADO_ANT') {
+statusDiv.innerHTML = `<div class="mensaje error"><strong>Aviso:</strong> ${response.message}</div>`;
+} else {
+statusDiv.innerHTML = `<div class="mensaje error"><strong>Aviso:</strong> ${response.message}</div>`;
+}
+}
+
+
+function handleValidationFailure(error) {
+document.getElementById('btn-validar').disabled = false;
+document.getElementById('loader-validacion').style.display = 'none';
+document.getElementById('status-validacion').innerHTML = `<div class="mensaje error"><strong>Error de Conexión:</strong> ${error.message}</div>`;
+const fileInputManual = document.getElementById('comprobante-manual-upload');
+if (fileInputManual) {
+    fileInputManual.disabled = false;
+    fileInputManual.value = '';
+    document.getElementById('comprobante-manual-name').textContent = 'Ningún archivo seleccionado';
+}
+const btnCancelar = document.getElementById('btn-cancelar-upload');
+if(btnCancelar) btnCancelar.disabled = false;
+const btnPagarPendiente = document.getElementById('btn-pagar-pendiente');
+if(btnPagarPendiente) btnPagarPendiente.disabled = false;
+}
+
+
+/**
+ * (h) Progreso y botón verde para Aptitud Física
+ */
+function submitAptitudManual() {
+const fileInput = document.getElementById('aptitud-manual-upload');
+const file = fileInput.files[0];
+const dni = document.getElementById('dni-input').value;
+const loader = document.getElementById('loader-aptitud');
+const btn = document.getElementById('btn-submit-aptitud-manual');
+
+
+if (!file) {
+    alert("Por favor, seleccione un archivo primero.");
+    return;
+}
+
+
+loader.style.display = 'block';
+btn.disabled = true;
+fileInput.disabled = true;
+
+
+comprimirYLeerArchivo(file).then(fileData => {
+    google.script.run
+        .withSuccessHandler(handleAptitudUploadSuccess)
+        .withFailureHandler(handleAptitudUploadFailure)
+        .subirAptitudManual(dni, fileData);
+}).catch(err => {
+    handleAptitudUploadFailure(err);
+});
+}
+
+
+/**
+ * (N) Redirección añadida
+ */
+function handleAptitudUploadSuccess(response) {
+const loader = document.getElementById('loader-aptitud');
+const seccion = document.getElementById('aptitud-manual-seccion');
+const btn = document.getElementById('btn-submit-aptitud-manual');
+const fileInput = document.getElementById('aptitud-manual-upload');
+const fileName = document.getElementById('aptitud-manual-name');
+const fileLabel = document.querySelector('label[for="aptitud-manual-upload"]');
+
+
+loader.style.display = 'none';
+
+
+if (response.status === 'OK') {
+    // Cambia el botón a verde
+    btn.style.backgroundColor = 'var(--color-exito, #28a745)';
+    btn.textContent = '✅ ¡Subido con Éxito!';
+    btn.disabled = true;
+   
+    // Oculta los controles de subida
+    fileInput.style.display = 'none';
+    fileName.style.display = 'none';
+    fileLabel.style.display = 'none';
+
+
+    // Muestra un mensaje de éxito
+    const successMsg = document.createElement('div');
+    successMsg.className = 'mensaje exito';
+    successMsg.style.marginTop = '10px';
+    successMsg.textContent = response.message;
+    seccion.appendChild(successMsg);
+
+
+    // (N) ¡¡¡NUEVO!!! Redireccionar al inicio
+    setTimeout(() => {
+        window.top.location.href = APP_URL;
+    }, 3000); // 3 segundos para leer el mensaje
+
+
+} else {
+    // Muestra error pero mantiene controles activos
+    seccion.innerHTML += `<div class="mensaje error">${response.message}</div>`;
+    btn.disabled = false;
+    fileInput.disabled = false;
+}
+}
+
+
+function handleAptitudUploadFailure(error) {
+const loader = document.getElementById('loader-aptitud');
+loader.style.display = 'none';
+const seccion = document.getElementById('aptitud-manual-seccion');
+seccion.innerHTML += `<div class="mensaje error">Error: ${error.message}</div>`;
+document.getElementById('btn-submit-aptitud-manual').disabled = false;
+document.getElementById('aptitud-manual-upload').disabled = false;
+}
+
+
+function handleComprobanteUploadSuccess(response) {
+document.getElementById('loader-validacion').style.display = 'none';
+const statusDiv = document.getElementById('status-validacion');
+if (response.status === 'OK') {
+statusDiv.innerHTML = `<div class="mensaje exito">${response.message}</div>`;
+setTimeout(() => {
+    window.top.location.href = APP_URL;
+}, 3000);
+} else {
+statusDiv.innerHTML = `<div class="mensaje error">${response.message}</div>`;
+const fileInputManual = document.getElementById('comprobante-manual-upload');
+if (fileInputManual) {
+    fileInputManual.disabled = false;
+    fileInputManual.value = '';
+    document.getElementById('comprobante-manual-name').textContent = 'Ningún archivo seleccionado';
+}
+const btnCancelar = document.getElementById('btn-cancelar-upload');
+if(btnCancelar) btnCancelar.disabled = false;
+const btnPagarPendiente = document.getElementById('btn-pagar-pendiente');
+if(btnPagarPendiente) btnPagarPendiente.disabled = false;
+}
+}
+
+
+function iniciarTemporizador(response) {
+document.getElementById('timer-seccion').style.display = 'block';
+document.getElementById('btn-validar').disabled = true;
+let segundos = 10;
+const countdown = document.getElementById('timer-countdown');
+countdown.textContent = segundos;
+const interval = setInterval(() => {
+segundos--;
+countdown.textContent = segundos;
+if (segundos <= 0) {
+clearInterval(interval);
+mostrarFormulario(response);
+}
+}, 1000);
+}
+
+
+function mostrarFormulario(response) {
+document.getElementById('validacion-seccion').style.display = 'none';
+document.getElementById('registro-seccion').style.display = 'block';
+
+
+document.getElementById('dni').value = response.datos.dni;
+
+
+if (response.status === 'OK' && response.datos) {
+document.getElementById('apellidoNombre').value = response.datos.nombreCompleto || '';
+document.getElementById('fechaNacimiento').value = response.datos.fechaNacimiento || '';
+document.getElementById('obraSocial').value = response.datos.obraSocial || '';
+document.getElementById('colegioJardin').value = response.datos.colegioJardin || '';
+document.getElementById('adultoResponsable1').value = response.datos.adultoResponsable || '';
+}
+
+
+guardarFormEnCache();
+calcularYMostrarEdad();
+toggleEspecifique('practicaDeporte', 'especifiqueDeporte');
+toggleEspecifique('tieneEnfermedad', 'especifiqueEnfermedad');
+toggleEspecifique('esAlergico', 'especifiqueAlergia');
+toggleCantidadCuotas();
+}
+
+
+function comprimirYLeerArchivo(file) {
+const MAX_WIDTH = 1024;
+const QUALITY = 0.7;
+const mimeType = file.type;
+
+
+return new Promise((resolve, reject) => {
+if (mimeType !== 'image/jpeg' && mimeType !== 'image/png') {
+readFileAsBase64(file).then(data => {
+resolve({ data, mimeType, fileName: file.name });
+}).catch(reject);
+return;
+}
+
+
+const reader = new FileReader();
+reader.onload = (e) => {
+const img = new Image();
+img.onload = () => {
+let width = img.width;
+let height = img.height;
+if (width > height) {
+if (width > MAX_WIDTH) {
+height *= MAX_WIDTH / width;
+width = MAX_WIDTH;
+}
+} else {
+if (height > MAX_WIDTH) {
+width *= MAX_WIDTH / height;
+height = MAX_WIDTH;
+}
+}
+const canvas = document.createElement('canvas');
+canvas.width = width;
+canvas.height = height;
+const ctx = canvas.getContext('2d');
+ctx.drawImage(img, 0, 0, width, height);
+const compressedData = canvas.toDataURL('image/jpeg', QUALITY);
+resolve({
+data: compressedData,
+mimeType: 'image/jpeg',
+fileName: file.name.replace(/\.[^/.]+$/, "") + ".jpg"
+});
+};
+img.onerror = reject;
+img.src = e.target.result;
+};
+reader.onerror = reject;
+reader.readAsDataURL(file);
+});
+}
+
+
+function manejarSubidaArchivo(inputElement, tipoArchivo, nombreLabelId, loaderId, urlHiddenId) {
+const file = inputElement.files[0];
+const nombreLabel = document.getElementById(nombreLabelId);
+const loader = document.getElementById(loaderId);
+const urlHidden = document.getElementById(urlHiddenId);
+const dni = document.getElementById('dni').value;
+
+
+urlHidden.value = '';
+loader.style.display = 'none';
+nombreLabel.textContent = 'Ningún archivo seleccionado';
+if (!file) return;
+
+
+if (!dni) {
+alert("Error: No se puede subir un archivo si el DNI no está cargado en el formulario (Paso 2).");
+inputElement.value = '';
+return;
+}
+
+
+nombreLabel.textContent = file.name;
+loader.className = 'loader-archivo';
+loader.style.display = 'block';
+loader.textContent = 'Iniciando...';
+
+
+inputElement.disabled = true;
+document.getElementById('submit-button').disabled = true;
+
+
+loader.textContent = 'Preparando archivo (comprimiendo si es imagen)...';
+comprimirYLeerArchivo(file).then(fileData => {
+loader.textContent = 'Subiendo archivo...';
+google.script.run
+.withSuccessHandler(function(response) {
+inputElement.disabled = false;
+document.getElementById('submit-button').disabled = false;
+if (response.status === 'OK') {
+loader.className = 'loader-archivo exito';
+loader.textContent = '✅ Archivo subido con éxito.';
+urlHidden.value = response.url;
+} else {
+loader.className = 'loader-archivo error';
+loader.textContent = `❌ Error: ${response.message}`;
+inputElement.value = '';
+nombreLabel.textContent = 'Ningún archivo seleccionado';
+}
+})
+.withFailureHandler(function(error) {
+inputElement.disabled = false;
+document.getElementById('submit-button').disabled = false;
+loader.className = 'loader-archivo error';
+loader.textContent = `❌ Error de conexión: ${error.message}`;
+inputElement.value = '';
+nombreLabel.textContent = 'Ningún archivo seleccionado';
+})
+.subirArchivoIndividual(fileData, dni, tipoArchivo);
+}).catch(err => {
+inputElement.disabled = false;
+document.getElementById('submit-button').disabled = false;
+loader.className = 'loader-archivo error';
+loader.textContent = `❌ Error al procesar el archivo: ${err.message}`;
+inputElement.value = '';
+nombreLabel.textContent = 'Ningún archivo seleccionado';
+});
+}
+
+
+function calcularYMostrarEdad() {
+const fechaNacimientoStr = document.getElementById('fechaNacimiento').value;
+const divEdad = document.getElementById('edad-calculada');
+if (!fechaNacimientoStr) {
+divEdad.textContent = '';
+return;
+}
+const fechaNacimiento = new Date(fechaNacimientoStr);
+const hoy = new Date();
+fechaNacimiento.setMinutes(fechaNacimiento.getMinutes() + fechaNacimiento.getTimezoneOffset());
+let anos = hoy.getFullYear() - fechaNacimiento.getFullYear();
+let meses = hoy.getMonth() - fechaNacimiento.getMonth();
+let dias = hoy.getDate() - fechaNacimiento.getDate();
+if (dias < 0) {
+meses--;
+dias += new Date(hoy.getFullYear(), hoy.getMonth(), 0).getDate();
+}
+if (meses < 0) {
+anos--;
+meses += 12;
+}
+if (anos >= 0) {
+divEdad.textContent = `Edad actual: ${anos} años, ${meses} meses y ${dias} días.`;
+} else {
+divEdad.textContent = '';
+}
+}
+
+
+function toggleEspecifique(radioName, inputId) {
+const radioChecked = document.querySelector(`input[name="${radioName}"]:checked`);
+const inputField = document.getElementById(inputId);
+if (radioChecked && radioChecked.value === 'Sí') {
+inputField.style.display = 'block';
+} else {
+inputField.style.display = 'none';
+inputField.value = '';
+}
+}
+
+
+function toggleCantidadCuotas() {
+  const metodoPago = document.getElementById('metodoPago').value;
+  const container = document.getElementById('cantidadCuotasContainer');
+  const selectCuotas = document.getElementById('cantidadCuotas');
+  if (metodoPago === 'Pago en Cuotas') {
+    container.style.display = 'block';
+    selectCuotas.classList.add('form-cache');
+    selectCuotas.required = true;
+  } else {
+    container.style.display = 'none';
+    selectCuotas.classList.remove('form-cache');
+    selectCuotas.required = false;
+    selectCuotas.value = '1';
+  }
+}
+
+
+function removerFila(boton) {
+boton.parentElement.remove();
+guardarFormEnCache();
+}
+
+
+function readFileAsBase64(file) {
+return new Promise((resolve, reject) => {
+const reader = new FileReader();
+reader.onload = () => resolve(reader.result);
+reader.onerror = (error) => reject(error);
+reader.readAsDataURL(file);
+});
+}
+
+
+function guardarFormEnCache() {
+try {
+const data = {};
+document.querySelectorAll('.form-cache').forEach(el => {
+const key = el.id || el.name;
+if (el.type === 'radio') {
+if (el.checked) {
+data[el.name] = el.value;
+}
+} else {
+if(key === 'cantidadCuotas' && document.getElementById('metodoPago').value !== 'Pago en Cuotas' ) {
+  data[key] = 0;
+} else {
+  data[key] = el.value;
+}
+}
+});
+data.telefonos = [];
+const parentezcos = document.querySelectorAll('.telefono-parentezco');
+const numeros = document.querySelectorAll('.telefono-numero');
+for (let i = 0; i < parentezcos.length; i++) {
+data.telefonos.push({ p: parentezcos[i].value, n: numeros[i].value });
+}
+data.autorizados = [];
+const nombresAut = document.querySelectorAll('.autorizado-nombre');
+const dnisAut = document.querySelectorAll('.autorizado-dni');
+for (let i = 0; i < dnisAut.length; i++) {
+data.autorizados.push({ n: nombresAut[i].value, d: dnisAut[i].value });
+}
+localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+} catch(e) {
+console.warn("No se pudo guardar el caché del formulario: ", e);
+}
+}
+
+
+function cargarFormDesdeCache() {
+try {
+const data = JSON.parse(localStorage.getItem(CACHE_KEY));
+if (!data) return;
+
+
+document.querySelectorAll('.form-cache').forEach(el => {
+const key = el.id || el.name;
+if (data[key] !== undefined) {
+if (el.type === 'radio') {
+el.checked = (el.value === data[key]);
+} else {
+el.value = data[key];
+}
+}
+});
+
+
+if (data.telefonos) {
+const telContainer = document.getElementById('telefonos-container');
+telContainer.innerHTML = '';
+data.telefonos.forEach(tel => {
+const div = document.createElement('div');
+div.className = 'fila-dinamica';
+div.innerHTML = `
+<input type="text" class="telefono-parentezco form-cache" placeholder="Parentezco (ej: Madre)" value="${tel.p || ''}">
+<input type="tel" class="telefono-numero form-cache" placeholder="Número de Teléfono" value="${tel.n || ''}">
+<button type="button" class="btn-remover" onclick="removerFila(this)">X</button>
+`;
+telContainer.appendChild(div);
+});
+}
+
+
+if (data.autorizados) {
+const autContainer = document.getElementById('autorizados-container');
+autContainer.innerHTML = '';
+data.autorizados.forEach(aut => {
+const div = document.createElement('div');
+div.className = 'fila-dinamica';
+div.innerHTML = `
+<input type="text" class="autorizado-nombre form-cache" placeholder="Nombre y Apellido (Relación)" value="${aut.n || ''}">
+<input type="text" class="autorizado-dni form-cache" placeholder="DNI" maxlength="8" pattern="\\d{7,8}" value="${aut.d || ''}">
+<button type="button" class="btn-remover" onclick="removerFila(this)">X</button>
+`;
+autContainer.appendChild(div);
+});
+}
+calcularYMostrarEdad();
+} catch(e) {
+console.warn("No se pudo cargar el caché del formulario: ", e);
+}
+}
+
+
+function limpiarCache() {
+localStorage.removeItem(CACHE_KEY);
+}
+
+
+// =========================================================
+// LISTENERS DE EVENTOS
+// =========================================================
+
+
+document.getElementById('btn-validar').addEventListener('click', function() {
+const dni = document.getElementById('dni-input').value;
+const tipo = document.getElementById('tipoInscripto').value;
+if (!dni) {
+document.getElementById('status-validacion').innerHTML = '<div class="mensaje error">Por favor, ingrese un DNI.</div>';
+return;
+}
+document.getElementById('btn-validar').disabled = true;
+document.getElementById('loader-validacion').style.display = 'block';
+document.getElementById('status-validacion').innerHTML = '';
+google.script.run
+.withSuccessHandler(handleValidationSuccess)
+.withFailureHandler(handleValidationFailure)
+.validarAcceso(dni, tipo);
+});
+
+
+
+
+document.getElementById('fotoCarnet').addEventListener('change', function() {
+manejarSubidaArchivo(this, 'foto', 'fotoCarnetName', 'loader-foto', 'urlFotoCarnet');
+});
+document.getElementById('certificadoAptitud').addEventListener('change', function() {
+manejarSubidaArchivo(this, 'ficha', 'certificadoAptitudName', 'loader-certificado', 'urlCertificadoAptitud');
+});
+
+
+document.getElementById('fechaNacimiento').addEventListener('change', calcularYMostrarEdad);
+
+
+document.querySelectorAll('input[name="practicaDeporte"]').forEach(el => el.addEventListener('change', () => toggleEspecifique('practicaDeporte', 'especifiqueDeporte')));
+document.querySelectorAll('input[name="tieneEnfermedad"]').forEach(el => el.addEventListener('change', () => toggleEspecifique('tieneEnfermedad', 'especifiqueEnfermedad')));
+document.querySelectorAll('input[name="esAlergico"]').forEach(el => el.addEventListener('change', () => toggleEspecifique('esAlergico', 'especifiqueAlergia')));
+
+
+document.getElementById('metodoPago').addEventListener('change', toggleCantidadCuotas);
+
+
+document.getElementById('btn-add-telefono').addEventListener('click', function() {
+const container = document.getElementById('telefonos-container');
+const div = document.createElement('div');
+div.className = 'fila-dinamica';
+div.innerHTML = `
+<input type="text" class="telefono-parentezco form-cache" placeholder="Parentezco (ej: Madre)">
+<input type="tel" class="telefono-numero form-cache" placeholder="Número de Teléfono">
+<button type="button" class="btn-remover" onclick="removerFila(this)">X</button>
+`;
+container.appendChild(div);
+});
+
+
+document.getElementById('btn-add-autorizado').addEventListener('click', function() {
+const container = document.getElementById('autorizados-container');
+const div = document.createElement('div');
+div.className = 'fila-dinamica';
+div.innerHTML = `
+<div class="campos-dinamicos">
+    <input type="text" class="autorizado-nombre form-cache" placeholder="Nombre y Apellido (Relación)">
+    <input type="text" class="autorizado-dni form-cache" placeholder="DNI" maxlength="8" pattern="\\d{7,8}">
+</div>
+<button type="button" class="btn-remover" onclick="removerFila(this)">X</button>
+`;
+container.appendChild(div);
+});
+
+
+
+
+document.getElementById('registroForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  document.getElementById('submit-button').disabled = true;
+  document.getElementById('loader-registro').style.display = 'block';
+  document.getElementById('loader-registro').querySelector('p').textContent = 'Procesando registro... Por favor, espere.';
+  document.getElementById('status-registro').innerHTML = '';
+
+
+  const form = e.target;
+  const formDataObject = {};
+ 
+  document.querySelectorAll('.form-cache').forEach(el => {
+    const key = el.id || el.name;
+    if (el.type === 'radio') {
+      if (el.checked) {
+        formDataObject[key] = el.value;
+      }
+    } else {
+      if (key === 'cantidadCuotas') {
+         if(document.getElementById('metodoPago').value !== 'Pago en Cuotas') {
+            formDataObject[key] = 0;
+         } else {
+            formDataObject[key] = el.value;
+         }
+      } else {
+        formDataObject[key] = el.value;
+      }
+    }
+  });
+
+
+  // (e) Añade el tipo de inscripto
+  formDataObject.tipoInscripto = document.getElementById('tipoInscripto').value;
+
+
+  formDataObject.urlCertificadoAptitud = document.getElementById('urlCertificadoAptitud').value;
+  formDataObject.urlFotoCarnet = document.getElementById('urlFotoCarnet').value;
+ 
+  const telefonos = [];
+  const parentezcos = document.querySelectorAll('.telefono-parentezco');
+  const numeros = document.querySelectorAll('.telefono-numero');
+  for (let i = 0; i < parentezcos.length; i++) {
+    if (parentezcos[i].value && numeros[i].value) {
+      telefonos.push(`(${(parentezcos[i].value || 'N/A').trim()}) ${numeros[i].value.trim()}`);
+    }
+  }
+  formDataObject.telefonosContacto = telefonos.join(', ');
+
+
+  const autorizados = [];
+  const nombresAut = document.querySelectorAll('.autorizado-nombre');
+  const dnisAut = document.querySelectorAll('.autorizado-dni');
+  for (let i = 0; i < dnisAut.length; i++) {
+    if (nombresAut[i].value && dnisAut[i].value) {
+      autorizados.push(`${nombresAut[i].value.trim()} (DNI: ${dnisAut[i].value.trim()})`);
+    }
+  }
+  formDataObject.personasAutorizadas = autorizados.join(', ');
+
+
+  const urlFoto = formDataObject.urlFotoCarnet;
+  const fotoFile = form.fotoCarnet.files[0];
+
+
+  if (!urlFoto) {
+    let msg = '<strong>Error:</strong> Debe seleccionar y subir una Foto Carnet (Requerida).';
+    if (fotoFile) {
+      msg = '<strong>Error:</strong> La Foto Carnet está seleccionada pero aún no se ha subido. Espere a que la subida finalice (✅) o vuelva a seleccionarla.';
+    }
+    document.getElementById('status-registro').innerHTML = `<div class="mensaje error">${msg}</div>`;
+    document.getElementById('submit-button').disabled = false;
+    document.getElementById('loader-registro').style.display = 'none';
+    return;
+  }
+  if (form.certificadoAptitud.files[0] && !formDataObject.urlCertificadoAptitud) {
+    document.getElementById('status-registro').innerHTML = `<div class="mensaje error"><strong>Error:</strong> El Certificado de Aptitud se está subiendo o falló. Por favor, espere o vuelva a seleccionarlo.</div>`;
+    document.getElementById('submit-button').disabled = false;
+    document.getElementById('loader-registro').style.display = 'none';
+    return;
+  }
+ 
+  google.script.run
+  .withSuccessHandler(handleRegistroSuccess)
+  .withFailureHandler(handleRegistroFailure)
+  .paso1_registrarRegistro(formDataObject);
+});
+
+
+document.getElementById('btn-limpiar-form').addEventListener('click', function() {
+if (confirm('¿Está seguro de que desea reiniciar el formulario? Se perderán todos los datos cargados.')) {
+limpiarCache();
+window.top.location.href = APP_URL;
+}
+});
+
+
+document.getElementById('registroForm').addEventListener('change', guardarFormEnCache);
+
+
+document.addEventListener('DOMContentLoaded', () => {
+cargarFormDesdeCache();
+toggleEspecifique('practicaDeporte', 'especifiqueDeporte');
+toggleEspecifique('tieneEnfermedad', 'especifiqueEnfermedad');
+toggleEspecifique('esAlergico', 'especifiqueAlergia');
+toggleCantidadCuotas();
+});
+
+
+</script>
+</body>
+</html>
