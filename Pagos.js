@@ -1,4 +1,4 @@
-Pagos.gs
+
 /* */
 // --- CONFIGURACIÓN DE MERCADO PAGO ---
 /* */

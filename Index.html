@@ -15,21 +15,31 @@ display: none;
 text-align: center;
 margin-top: 10px;
 }
-/* Estilo para los campos dinámicos de teléfono */
+/* Estilo para los campos dinámicos de teléfono (Reutilizado) */
 .grupo-telefono {
     display: flex;
     gap: 10px;
     align-items: center;
-    margin-bottom: 5px;
-}
-.grupo-telefono .telefono-parentezco {
-    flex-grow: 1;
+    margin-bottom: 15px; /* (Ajuste de margen) */
 }
 .grupo-telefono .telefono-area-code {
-    width: 20%;
+    width: 30%; /* (Ajuste de ancho) */
+    margin-bottom: 0; /* (Anulación) */
 }
 .grupo-telefono .telefono-numero {
-    flex-grow: 2;
+    flex-grow: 1; /* (Ajuste) */
+    margin-bottom: 0; /* (Anulación) */
+}
+
+/* Estilos para la sección de hermanos (reutiliza fila-dinamica) */
+.fila-hermano label {
+    font-size: 0.9em;
+    font-weight: normal;
+    margin-bottom: 2px;
+    margin-top: 5px;
+}
+.fila-hermano {
+    background-color: #f9f9f9;
 }
 </style>
 </head>
@@ -66,8 +76,11 @@ margin-top: 10px;
 <form id="registroForm">
 <div class="form-section">
 <h3>Paso 2: Completar Datos del Inscripto</h3>
-<label for="apellidoNombre">Apellido y Nombre Completo:</label>
-<input type="text" id="apellidoNombre" name="apellidoNombre" class="form-cache" required>
+
+<label for="nombre">Nombre:</label>
+<input type="text" id="nombre" name="nombre" class="form-cache" required>
+<label for="apellido">Apellido:</label>
+<input type="text" id="apellido" name="apellido" class="form-cache" required>
 <label for="dni">DNI: (sin puntos)</label>
 <input type="text" id="dni" name="dni" class="form-cache" required readonly>
 <label for="fechaNacimiento">Fecha de Nacimiento:</label>
@@ -85,16 +98,30 @@ margin-top: 10px;
 
 <div class="form-section">
 <h3>Datos de Adultos Responsables</h3>
+
 <label for="adultoResponsable1">Responsable 1: (Nombre y Apellido)</label>
 <input type="text" id="adultoResponsable1" name="adultoResponsable1" class="form-cache" required>
-<label for="adultoResponsable2">Responsable 2: (Nombre y Apellido)</label>
-<input type="text" id="adultoResponsable2" name="adultoResponsable2" class="form-cache">
+
+<label for="dniResponsable1">DNI Responsable 1: (sin puntos)</label>
+<input type="tel" id="dniResponsable1" name="dniResponsable1" class="form-cache" required pattern="\d{7,8}" maxlength="8" placeholder="Ej: 12345678">
+
 <label for="email">Email (Contacto Principal 1):</label>
 <input type="email" id="email" name="email" class="form-cache" required>
-<label>Teléfonos de Contacto</label>
-<div id="telefonos-container">
-    </div>
-<button type="button" id="btn-add-telefono" class="btn-dinamico">Agregar Teléfono:</button>
+
+<label>Teléfono Responsable 1:</label>
+<div class="grupo-telefono">
+    <input type="tel" id="telefonoResp1Area" class="telefono-area-code form-cache" placeholder="Cod. Área (sin 0)" required pattern="^[1-9][0-9]{1,4}$" title="Ingrese el Código de Área sin el 0 inicial.">
+    <input type="tel" id="telefonoResp1Numero" class="telefono-numero form-cache" placeholder="Número (sin 15)" required pattern="^[0-9]{6,10}$" title="Ingrese el número de teléfono sin el 15 inicial.">
+</div>
+
+<label for="adultoResponsable2" style="margin-top: 15px;">Responsable 2: (Nombre y Apellido)</label>
+<input type="text" id="adultoResponsable2" name="adultoResponsable2" class="form-cache">
+
+<label>Teléfono Responsable 2:</label>
+<div class="grupo-telefono">
+    <input type="tel" id="telefonoResp2Area" class="telefono-area-code form-cache" placeholder="Cod. Área (sin 0)" pattern="^[1-9][0-9]{1,4}$" title="Ingrese el Código de Área sin el 0 inicial.">
+    <input type="tel" id="telefonoResp2Numero" class="telefono-numero form-cache" placeholder="Número (sin 15)" pattern="^[0-9]{6,10}$" title="Ingrese el número de teléfono sin el 15 inicial.">
+</div>
 <label style="margin-top: 20px;">Personas autorizadas a retirar:</label>
 <div id="autorizados-container">
 </div>
@@ -103,7 +130,14 @@ margin-top: 10px;
 
 
 <div class="form-section">
-<h3>Información de Salud</h3>
+<h3>Hermanos (Opcional)</h3>
+<p style="font-size: 0.9em; color: #555; margin-bottom: 15px;">Agregue aquí los datos de los hermanos que se inscriben. Se registrará el cupo. Los datos de salud y archivos se solicitarán al momento de pagar la inscripción del hermano/a.</p>
+<div id="hermanos-container">
+    </div>
+<button type="button" id="btn-add-hermano" class="btn-dinamico">Agregar Hermano/a</button>
+</div>
+<div class="form-section">
+<h3>Información de Salud (Inscripto Principal)</h3>
 <div class="radio-group">
 <label>¿Practica algún deporte o actividad extracurricular?</label>
 <label><input type="radio" name="practicaDeporte" value="Sí" class="form-cache" required> Sí</label>
@@ -188,7 +222,7 @@ margin-top: 10px;
 const APP_URL = "<?= appUrl ?>";
 const CACHE_KEY = 'formDataCache';
 let numeroDeTurnoGuardado = null;
-let telefonoCounter = 0; // Contador global para manejar IDs y requerimiento
+// let telefonoCounter = 0; // (CAMBIO 4: Eliminado)
 
 // =========================================================
 // DEFINICIONES DE FUNCIONES
@@ -337,14 +371,13 @@ document.getElementById('aptitud-manual-name').textContent = this.files[0] ? thi
 document.getElementById('btn-submit-aptitud-manual').addEventListener('click', submitAptitudManual);
 }
 
-
 } else if (response.status === 'DUPLICADO_PENDIENTE_PAGO' ||
 response.status === 'DUPLICADO_PENDIENTE_EFECTIVO' ||
-response.status === 'DUPLICADO_PENDIENTE_ERROR') {
+response.status === 'DUPLICADO_PENDIENTE_ERROR' ||
+response.status === 'INCOMPLETE_REGISTRATION' ) { // (CAMBIO 5: Añadido)
 
 
 let html = `<div class="mensaje error" style="text-align:left;"><strong>${response.message}</strong></div>`;
-
 
 // (L) Si es un error de repago, no mostramos el botón de pago.
 if (response.status === 'DUPLICADO_PENDIENTE_PAGO' && response.init_point) {
@@ -354,7 +387,8 @@ html += `
 `;
 }
 
-
+// (CAMBIO 6: Ocultar subida de comprobante si es INCOMPLETE_REGISTRATION)
+if (response.status !== 'INCOMPLETE_REGISTRATION') {
 html += `
 <div id="comprobante-manual-seccion">
 <h3>2. Si ya abonó, suba su comprobante:</h3>
@@ -365,12 +399,17 @@ html += `
 <button type="button" id="btn-cancelar-upload">Cancelar</button>
 </div>
 `;
+} else {
+// Si es un hermano incompleto, solo puede cancelar/volver
+html += `<button type="button" id="btn-cancelar-upload" style="background-color: #7f8c8d;">Volver</button>`;
+}
 
 
 statusDiv.innerHTML = html;
 
-
-document.getElementById('comprobante-manual-upload').addEventListener('change', function() {
+const comprobanteInput = document.getElementById('comprobante-manual-upload');
+if (comprobanteInput) {
+comprobanteInput.addEventListener('change', function() {
 const file = this.files[0];
 if (!file) {
 document.getElementById('comprobante-manual-name').textContent = 'Ningún archivo seleccionado';
@@ -394,6 +433,7 @@ google.script.run
 handleValidationFailure(err);
 });
 });
+}
 
 
 const btnPagar = document.getElementById('btn-pagar-pendiente');
@@ -404,12 +444,13 @@ this.textContent = "Redirigiendo...";
 window.top.location.href = response.init_point;
 });
 }
+
 document.getElementById('btn-cancelar-upload').addEventListener('click', function() {
 window.top.location.href = APP_URL;
 });
 
 
-} else if (response.status === 'ERROR_TIPO_NUEVO' || response.status === 'ERROR_TIPO_ANT' || response.status === 'YA_REGISTRADO' || response.status === 'ANULADO' || response.status === 'NO_ENCONTRADO_ANT') {
+} else if (response.status === 'ERROR_TIPO_NUEVO' || response.status === 'ERROR_TIPO_ANT' || response.status === 'YA_REGISTRADO' || response.status === 'ANULADO' || response.status === 'NO_ENCONTRADO_ANT' || response.status === 'NO_HABILITADO') { // (CAMBIO 7: Añadido)
 statusDiv.innerHTML = `<div class="mensaje error"><strong>Aviso:</strong> ${response.message}</div>`;
 } else {
 statusDiv.innerHTML = `<div class="mensaje error"><strong>Aviso:</strong> ${response.message}</div>`;
@@ -575,11 +616,28 @@ document.getElementById('registro-seccion').style.display = 'block';
 document.getElementById('dni').value = response.datos.dni;
 
 if (response.status === 'OK' && response.datos) {
-document.getElementById('apellidoNombre').value = response.datos.nombreCompleto || '';
+// (CAMBIO 8: Cargar campos separados)
+document.getElementById('nombre').value = response.datos.nombre || '';
+document.getElementById('apellido').value = response.datos.apellido || '';
+// (FIN CAMBIO 8)
 document.getElementById('fechaNacimiento').value = response.datos.fechaNacimiento || '';
 document.getElementById('obraSocial').value = response.datos.obraSocial || '';
 document.getElementById('colegioJardin').value = response.datos.colegioJardin || '';
 document.getElementById('adultoResponsable1').value = response.datos.adultoResponsable || '';
+
+// (CAMBIO 9: Cargar teléfono separado si existe)
+if (response.datos.telefonoContacto) {
+    // Asumir formato (XXX) YYYYYYY o similar
+    const telParts = response.datos.telefonoContacto.match(/(\d+)/g);
+    if (telParts && telParts.length >= 2) {
+        document.getElementById('telefonoResp1Area').value = telParts[0];
+        document.getElementById('telefonoResp1Numero').value = telParts.slice(1).join('');
+    } else if (telParts && telParts.length === 1) {
+         document.getElementById('telefonoResp1Numero').value = telParts[0];
+    }
+}
+// (FIN CAMBIO 9)
+
 }
 
 // 🛑 --- INICIO DE LA CORRECCIÓN DE CUPO JORNADA EXTENDIDA --- 🛑
@@ -602,7 +660,9 @@ msgCupo.style.display = 'inline'; // Mostrar el mensaje
 // 🛑 --- FIN DE LA CORRECCIÓN DE CUPO --- 🛑
 
 guardarFormEnCache();
-calcularYMostrarEdad();
+// (CAMBIO 10: Generalización de calcularYMostrarEdad)
+calcularYMostrarEdad(document.getElementById('fechaNacimiento'), document.getElementById('edad-calculada'));
+// (FIN CAMBIO 10)
 toggleEspecifique('practicaDeporte', 'especifiqueDeporte');
 toggleEspecifique('tieneEnfermedad', 'especifiqueEnfermedad');
 toggleEspecifique('esAlergico', 'especifiqueAlergia');
@@ -731,34 +791,49 @@ nombreLabel.textContent = 'Ningún archivo seleccionado';
 });
 }
 
+// (CAMBIO 11: Generalización de calcularYMostrarEdad)
+/**
+ * Calcula la edad basado en un input de fecha y la muestra en un elemento div.
+ * @param {HTMLInputElement} inputElement El input (type="date") de la fecha de nacimiento.
+ * @param {HTMLElement} displayElement El div donde se mostrará la edad calculada.
+ */
+function calcularYMostrarEdad(inputElement, displayElement) {
+    const fechaNacimientoStr = inputElement.value;
+    if (!fechaNacimientoStr) {
+        displayElement.textContent = '';
+        return;
+    }
+    try {
+        const fechaNacimiento = new Date(fechaNacimientoStr);
+        const hoy = new Date();
+        
+        // Corregir el offset de la zona horaria para la comparación
+        fechaNacimiento.setMinutes(fechaNacimiento.getMinutes() + fechaNacimiento.getTimezoneOffset());
 
-function calcularYMostrarEdad() {
-const fechaNacimientoStr = document.getElementById('fechaNacimiento').value;
-const divEdad = document.getElementById('edad-calculada');
-if (!fechaNacimientoStr) {
-divEdad.textContent = '';
-return;
+        let anos = hoy.getFullYear() - fechaNacimiento.getFullYear();
+        let meses = hoy.getMonth() - fechaNacimiento.getMonth();
+        let dias = hoy.getDate() - fechaNacimiento.getDate();
+
+        if (dias < 0) {
+            meses--;
+            // Obtener los días del mes anterior
+            dias += new Date(hoy.getFullYear(), hoy.getMonth(), 0).getDate();
+        }
+        if (meses < 0) {
+            anos--;
+            meses += 12;
+        }
+
+        if (anos >= 0) {
+            displayElement.textContent = `Edad actual: ${anos} años, ${meses} meses y ${dias} días.`;
+        } else {
+            displayElement.textContent = 'Fecha futura no válida.';
+        }
+    } catch(e) {
+         displayElement.textContent = '';
+    }
 }
-const fechaNacimiento = new Date(fechaNacimientoStr);
-const hoy = new Date();
-fechaNacimiento.setMinutes(fechaNacimiento.getMinutes() + fechaNacimiento.getTimezoneOffset());
-let anos = hoy.getFullYear() - fechaNacimiento.getFullYear();
-let meses = hoy.getMonth() - fechaNacimiento.getMonth();
-let dias = hoy.getDate() - fechaNacimiento.getDate();
-if (dias < 0) {
-meses--;
-dias += new Date(hoy.getFullYear(), hoy.getMonth(), 0).getDate();
-}
-if (meses < 0) {
-anos--;
-meses += 12;
-}
-if (anos >= 0) {
-divEdad.textContent = `Edad actual: ${anos} años, ${meses} meses y ${dias} días.`;
-} else {
-divEdad.textContent = '';
-}
-}
+// (FIN CAMBIO 11)
 
 
 function toggleEspecifique(radioName, inputId) {
@@ -792,12 +867,7 @@ selectCuotas.value = '1';
 
 function removerFila(boton) {
     boton.parentElement.remove();
-    // Reajustar el requerimiento si se elimina el único campo
-    const telefonos = document.querySelectorAll('.telefono-area-code');
-    if (telefonos.length === 0) {
-        // Si no queda ninguno, volvemos a añadir el primero para cumplir el required
-        addTelefonoCampos(true);
-    }
+    // (CAMBIO 12: Lógica de teléfono eliminada de esta función)
     guardarFormEnCache();
 }
 
@@ -812,39 +882,60 @@ reader.readAsDataURL(file);
 }
 
 
+// (CAMBIO 13: Nueva función para agregar campos de hermano)
 /**
- * NUEVA FUNCIÓN: Genera e inserta los campos de teléfono con validación.
- * @param {boolean} isRequired Indica si los campos deben tener el atributo required.
+ * NUEVA FUNCIÓN: Genera e inserta los campos de hermano.
+ * @param {object | null} hermanoData Datos opcionales para cargar desde caché.
  */
-function addTelefonoCampos(isRequired = false) {
-    const container = document.getElementById('telefonos-container');
+function addHermanoCampos(hermanoData = null) {
+    const container = document.getElementById('hermanos-container');
     const div = document.createElement('div');
-    div.className = 'fila-dinamica';
+    div.className = 'fila-dinamica fila-hermano'; // Usar fila-dinamica para estilos
+
+    // Cargar datos de caché o valores vacíos
+    const nombre = hermanoData ? (hermanoData.n || '') : '';
+    const apellido = hermanoData ? (hermanoData.a || '') : '';
+    const dni = hermanoData ? (hermanoData.d || '') : '';
+    const fechaNac = hermanoData ? (hermanoData.f || '') : '';
+    const colegio = hermanoData ? (hermanoData.c || '') : '';
+
+    // ID único para el label y el input de fecha
+    const uniqueId = 'hermano_fecha_' + (document.querySelectorAll('.fila-hermano').length);
+
     div.innerHTML = `
-        <input type="text" class="telefono-parentezco form-cache" placeholder="Parentezco (ej: Madre)">
-        <div class="grupo-telefono" style="flex-grow: 1;">
-            <input 
-                type="tel" 
-                class="telefono-area-code form-cache" 
-                placeholder="Cod. Área (sin 0)"
-                ${isRequired ? 'required' : ''}
-                pattern="^[1-9][0-9]{1,4}$"
-                title="Ingrese el Código de Área sin el 0 inicial."
-            >
-            <input 
-                type="tel" 
-                class="telefono-numero form-cache" 
-                placeholder="Número (sin 15)"
-                ${isRequired ? 'required' : ''}
-                pattern="^[0-9]{6,10}$"
-                title="Ingrese el número de teléfono sin el 15 inicial."
-            >
-        </div>
+        <label>Nombre:</label>
+        <input type="text" class="hermano-nombre form-cache" placeholder="Nombre del hermano/a" value="${nombre}" required>
+        
+        <label>Apellido:</label>
+        <input type="text" class="hermano-apellido form-cache" placeholder="Apellido del hermano/a" value="${apellido}" required>
+        
+        <label>DNI: (sin puntos)</label>
+        <input type="tel" class="hermano-dni form-cache" placeholder="DNI del hermano/a" value="${dni}" pattern="\\d{7,8}" maxlength="8" required>
+        
+        <label for="${uniqueId}">Fecha de Nacimiento:</label>
+        <input type="date" id="${uniqueId}" class="hermano-fechaNacimiento form-cache" value="${fechaNac}" required>
+        <div class="edad-calculada-hermano" style="font-size: 0.9em; color: #666; margin-top: -10px; margin-bottom: 15px;"></div>
+        
+        <label>Colegio / Jardín:</label>
+        <input type="text" class="hermano-colegioJardin form-cache" placeholder="Colegio" value="${colegio}">
+        
         <button type="button" class="btn-remover" onclick="removerFila(this)">X</button>
     `;
     container.appendChild(div);
-    telefonoCounter++; // Incrementa el contador por si se necesita saber cuántos hay
+
+    // Adjuntar listener de edad
+    const fechaInput = div.querySelector('.hermano-fechaNacimiento');
+    const edadDiv = div.querySelector('.edad-calculada-hermano');
+    fechaInput.addEventListener('change', function() {
+        calcularYMostrarEdad(this, edadDiv);
+    });
+    
+    // Calcular edad si se cargó desde caché
+    if(fechaNac) {
+        calcularYMostrarEdad(fechaInput, edadDiv);
+    }
 }
+// (FIN CAMBIO 13)
 
 
 function guardarFormEnCache() {
@@ -865,21 +956,8 @@ data[key] = el.value;
 }
 });
 
-// Guardado de Teléfonos con la nueva estructura
-data.telefonos = [];
-const parentezcos = document.querySelectorAll('.telefono-parentezco');
-const codigosArea = document.querySelectorAll('.telefono-area-code');
-const numeros = document.querySelectorAll('.telefono-numero');
-for (let i = 0; i < parentezcos.length; i++) {
-    // Solo guardar si hay datos para evitar guardar filas vacías de caché
-    if (parentezcos[i].value || codigosArea[i].value || numeros[i].value) {
-        data.telefonos.push({ 
-            p: parentezcos[i].value, 
-            a: codigosArea[i].value, // 'a' para area code
-            n: numeros[i].value 
-        });
-    }
-}
+// (CAMBIO 14: Lógica de teléfonos dinámicos eliminada)
+// (FIN CAMBIO 14)
 
 data.autorizados = [];
 const nombresAut = document.querySelectorAll('.autorizado-nombre');
@@ -889,6 +967,23 @@ if (nombresAut[i].value && dnisAut[i].value) {
 data.autorizados.push({ n: nombresAut[i].value, d: dnisAut[i].value });
 }
 }
+
+// (CAMBIO 15: Guardar Hermanos en caché)
+data.hermanos = [];
+document.querySelectorAll('.fila-hermano').forEach(fila => {
+    const nombre = fila.querySelector('.hermano-nombre').value;
+    const apellido = fila.querySelector('.hermano-apellido').value;
+    const dni = fila.querySelector('.hermano-dni').value;
+    const fechaNac = fila.querySelector('.hermano-fechaNacimiento').value;
+    const colegio = fila.querySelector('.hermano-colegioJardin').value;
+    
+    // Solo guardar si hay datos
+    if (nombre || apellido || dni) {
+        data.hermanos.push({ n: nombre, a: apellido, d: dni, f: fechaNac, c: colegio });
+    }
+});
+// (FIN CAMBIO 15)
+
 localStorage.setItem(CACHE_KEY, JSON.stringify(data));
 } catch(e) {
 console.warn("No se pudo guardar el caché del formulario: ", e);
@@ -912,50 +1007,8 @@ el.value = data[key];
 }
 });
 
-// Carga de Teléfonos desde caché (nueva estructura)
-if (data.telefonos && data.telefonos.length > 0) {
-    const telContainer = document.getElementById('telefonos-container');
-    telContainer.innerHTML = '';
-    
-    data.telefonos.forEach((tel, index) => {
-        const div = document.createElement('div');
-        div.className = 'fila-dinamica';
-        
-        // Determinar si es requerido (solo el primero)
-        const isRequired = (index === 0);
-
-        div.innerHTML = `
-            <input type="text" class="telefono-parentezco form-cache" placeholder="Parentezco (ej: Madre)" value="${tel.p || ''}">
-            <div class="grupo-telefono" style="flex-grow: 1;">
-                <input 
-                    type="tel" 
-                    class="telefono-area-code form-cache" 
-                    placeholder="Cod. Área (sin 0)" 
-                    value="${tel.a || ''}"
-                    ${isRequired ? 'required' : ''}
-                    pattern="^[1-9][0-9]{1,4}$"
-                    title="Ingrese el Código de Área sin el 0 inicial."
-                >
-                <input 
-                    type="tel" 
-                    class="telefono-numero form-cache" 
-                    placeholder="Número (sin 15)" 
-                    value="${tel.n || ''}"
-                    ${isRequired ? 'required' : ''}
-                    pattern="^[0-9]{6,10}$"
-                    title="Ingrese el número de teléfono sin el 15 inicial."
-                >
-            </div>
-            <button type="button" class="btn-remover" onclick="removerFila(this)">X</button>
-        `;
-        telContainer.appendChild(div);
-        telefonoCounter++;
-    });
-
-} else {
-    // Si no hay datos de caché, asegurar que se añade el primer campo requerido
-    addTelefonoCampos(true);
-}
+// (CAMBIO 16: Lógica de teléfonos dinámicos eliminada)
+// (FIN CAMBIO 16)
 
 if (data.autorizados) {
 const autContainer = document.getElementById('autorizados-container');
@@ -973,7 +1026,21 @@ div.innerHTML = `
 autContainer.appendChild(div);
 });
 }
-calcularYMostrarEdad();
+
+// (CAMBIO 17: Cargar Hermanos desde caché)
+if (data.hermanos && data.hermanos.length > 0) {
+    const hermanosContainer = document.getElementById('hermanos-container');
+    hermanosContainer.innerHTML = '';
+    data.hermanos.forEach(hermano => {
+        addHermanoCampos(hermano);
+    });
+}
+// (FIN CAMBIO 17)
+
+// (CAMBIO 18: Generalización de calcularYMostrarEdad)
+calcularYMostrarEdad(document.getElementById('fechaNacimiento'), document.getElementById('edad-calculada'));
+// (FIN CAMBIO 18)
+
 } catch(e) {
 console.warn("No se pudo cargar el caché del formulario: ", e);
 }
@@ -1015,7 +1082,11 @@ manejarSubidaArchivo(this, 'ficha', 'certificadoAptitudName', 'loader-certificad
 });
 
 
-document.getElementById('fechaNacimiento').addEventListener('change', calcularYMostrarEdad);
+// (CAMBIO 19: Listener de edad generalizado)
+document.getElementById('fechaNacimiento').addEventListener('change', function() {
+    calcularYMostrarEdad(this, document.getElementById('edad-calculada'));
+});
+// (FIN CAMBIO 19)
 
 
 document.querySelectorAll('input[name="practicaDeporte"]').forEach(el => el.addEventListener('change', () => toggleEspecifique('practicaDeporte', 'especifiqueDeporte')));
@@ -1026,14 +1097,15 @@ document.querySelectorAll('input[name="esAlergico"]').forEach(el => el.addEventL
 document.getElementById('metodoPago').addEventListener('change', toggleCantidadCuotas);
 
 
-/**
- * Listener modificado para usar la nueva función addTelefonoCampos
- * NOTA: Siempre añade campos que NO son requeridos (ya que el primero ya fue añadido o será verificado).
- */
-document.getElementById('btn-add-telefono').addEventListener('click', function() {
-    addTelefonoCampos(false);
+// (CAMBIO 20: Listener de teléfono dinámico ELIMINADO)
+// (FIN CAMBIO 20)
+
+// (CAMBIO 21: Nuevo listener para botón de hermanos)
+document.getElementById('btn-add-hermano').addEventListener('click', function() {
+    addHermanoCampos();
     guardarFormEnCache();
 });
+// (FIN CAMBIO 21)
 
 
 document.getElementById('btn-add-autorizado').addEventListener('click', function() {
@@ -1055,12 +1127,13 @@ guardarFormEnCache();
 document.getElementById('registroForm').addEventListener('submit', function(e) {
 e.preventDefault();
 
+// (CAMBIO 22: Validación de teléfono requerida actualizada)
 // --- VALIDACIÓN ADICIONAL DE TELÉFONO REQUERIDO ---
-// Si no hay campos, la validación HTML no se ejecuta, así que forzamos la creación del primero
-const telefonosRequeridos = document.querySelectorAll('.telefono-area-code[required]');
-if (telefonosRequeridos.length === 0) {
-    alert('Debe ingresar al menos un teléfono de contacto (Código de Área y Número).');
-    document.getElementById('btn-add-telefono').scrollIntoView({ behavior: 'smooth' });
+const tel1Area = document.getElementById('telefonoResp1Area').value;
+const tel1Num = document.getElementById('telefonoResp1Numero').value;
+if (!tel1Area || !tel1Num) {
+    alert('Debe ingresar el Código de Área y el Número del Teléfono Responsable 1.');
+    document.getElementById('telefonoResp1Area').scrollIntoView({ behavior: 'smooth' });
     return;
 }
 // ----------------------------------------------------
@@ -1102,28 +1175,25 @@ formDataObject.tipoInscripto = document.getElementById('tipoInscripto').value;
 formDataObject.urlCertificadoAptitud = document.getElementById('urlCertificadoAptitud').value;
 formDataObject.urlFotoCarnet = document.getElementById('urlFotoCarnet').value;
 
-// --- RECOLECCIÓN DE TELÉFONOS CON NUEVA ESTRUCTURA ---
-const telefonos = [];
-const parentezcos = document.querySelectorAll('.telefono-parentezco');
-const codigosArea = document.querySelectorAll('.telefono-area-code');
-const numeros = document.querySelectorAll('.telefono-numero');
-for (let i = 0; i < parentezcos.length; i++) {
-    const parentesco = parentezcos[i].value;
-    const codArea = codigosArea[i].value;
-    const numero = numeros[i].value;
-
-    // Solo agregar si al menos se ingresó el código de área O el número,
-    // o el parentesco para no enviar filas completamente vacías
-    if (parentesco || codArea || numero) {
-        // Formato para la celda: (Parentesco - CodArea) Número
-        // Si el número o el cod. área faltan (pero no son requeridos), se pone 'N/A' o se deja vacío para evitar errores de formato
-        const telefonoCompleto = `${(parentesco || 'N/A').trim()};${(codArea || 'N/A').trim()};${(numero || 'N/A').trim()}`;
-        telefonos.push(telefonoCompleto);
-    }
+// (CAMBIO 23: Recolección de teléfonos estáticos)
+// --- RECOLECCIÓN DE TELÉFONOS ESTÁTICOS ---
+// Combinar Cod Area + Numero para Tel 1
+if (formDataObject.telefonoResp1Area && formDataObject.telefonoResp1Numero) {
+    formDataObject.telefonoResponsable1 = `(${formDataObject.telefonoResp1Area}) ${formDataObject.telefonoResp1Numero}`;
+} else {
+    formDataObject.telefonoResponsable1 = ''; // Ya es requerido, pero por si acaso.
 }
-// Guardamos el array como un string separado por punto y coma (para una sola celda)
-formDataObject.telefonosContacto = telefonos.join(' | '); 
-// ------------------------------------------------------
+
+// Combinar Cod Area + Numero para Tel 2
+if (formDataObject.telefonoResp2Area && formDataObject.telefonoResp2Numero) {
+    formDataObject.telefonoResponsable2 = `(${formDataObject.telefonoResp2Area}) ${formDataObject.telefonoResp2Numero}`;
+} else {
+    formDataObject.telefonoResponsable2 = '';
+}
+// (FIN CAMBIO 23)
+
+// (CAMBIO 24: Lógica de teléfonos dinámicos eliminada)
+// (FIN CAMBIO 24)
 
 
 const autorizados = [];
@@ -1135,6 +1205,31 @@ autorizados.push(`${nombresAut[i].value.trim()} (DNI: ${dnisAut[i].value.trim()}
 }
 }
 formDataObject.personasAutorizadas = autorizados.join(', ');
+
+
+// (CAMBIO 25: Recolección de Hermanos)
+// --- RECOLECCIÓN DE HERMANOS ---
+const hermanos = [];
+document.querySelectorAll('.fila-hermano').forEach(fila => {
+    const nombre = fila.querySelector('.hermano-nombre').value;
+    const apellido = fila.querySelector('.hermano-apellido').value;
+    const dni = fila.querySelector('.hermano-dni').value;
+    const fechaNacimiento = fila.querySelector('.hermano-fechaNacimiento').value;
+    const colegioJardin = fila.querySelector('.hermano-colegioJardin').value;
+
+    // Validar que los campos requeridos del hermano estén
+    if (nombre && apellido && dni && fechaNacimiento) {
+        hermanos.push({
+            nombre: nombre,
+            apellido: apellido,
+            dni: dni,
+            fechaNacimiento: fechaNacimiento,
+            colegioJardin: colegioJardin
+        });
+    }
+});
+formDataObject.hermanos = hermanos; // Añadir el array al objeto principal
+// (FIN CAMBIO 25)
 
 
 const urlFoto = formDataObject.urlFotoCarnet;
@@ -1158,10 +1253,12 @@ document.getElementById('loader-registro').style.display = 'none';
 return;
 }
 
+// (CAMBIO 26: Actualización de la llamada a la función)
 google.script.run
 .withSuccessHandler(handleRegistroSuccess)
 .withFailureHandler(handleRegistroFailure)
-.paso1_registrarRegistro(formDataObject);
+.paso1_registrarRegistro(formDataObject, formDataObject.hermanos); // Se pasa el array de hermanos como 2do argumento
+// (FIN CAMBIO 26)
 });
 
 
@@ -1177,13 +1274,11 @@ document.getElementById('registroForm').addEventListener('change', guardarFormEn
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Al cargar, aseguramos que haya al menos un campo de teléfono para que el 'required' funcione
-    const telefonosExistentes = document.querySelectorAll('.telefono-area-code');
-    if (telefonosExistentes.length === 0) {
-        addTelefonoCampos(true); // Añade el primer grupo de campos REQUERIDOS
-    }
+    // (CAMBIO 27: Lógica de teléfono dinámico eliminada)
     
     cargarFormDesdeCache();
+    // (FIN CAMBIO 27)
+    
     toggleEspecifique('practicaDeporte', 'especifiqueDeporte');
     toggleEspecifique('tieneEnfermedad', 'especifiqueEnfermedad');
     toggleEspecifique('esAlergico', 'especifiqueAlergia');

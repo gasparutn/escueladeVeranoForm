@@ -318,8 +318,10 @@
 
 
   /* Campos de entrada dentro de la fila dinámica */
-  .fila-dinamica input[type="text"] {
-    width: 95% !important;
+  .fila-dinamica input[type="text"],
+  .fila-dinamica input[type="tel"],
+  .fila-dinamica input[type="date"] {
+    width: 95% !important; 
     /* Asegura el ancho completo con un margen */
     display: block !important;
     /* Fuerza a que cada uno esté en su propia línea */
